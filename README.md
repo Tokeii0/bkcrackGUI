@@ -1,6 +1,5 @@
 # bkcrackGUI
 ![](https://img.shields.io/badge/%E4%BD%9C%E8%80%85QQ-1763227052-blue)
-
 基于 bkcrack 的可视化压缩包明文攻击工具。
 
 区别于 [bkcrack](https://github.com/kimci86/bkcrack/tree/master)，bkcrackGUI 提供了更便捷的操作方式。
