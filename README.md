@@ -1,5 +1,5 @@
 # bkcrackGUI
-![](https://img.shields.io/badge/%E4%BD%9C%E8%80%85QQ-1763227052-blue)
+<a href="https://qm.qq.com/q/fZMW9VWoUg"><img src="https://img.shields.io/badge/%E4%BD%9C%E8%80%85QQ-1763227052-blue"></a>
 
 基于 bkcrack 的可视化压缩包明文攻击工具。
 
