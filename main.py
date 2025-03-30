@@ -20,7 +20,7 @@ class MainWindow(QWidget, Ui_Form):
         self.CompressedZipInfo.clicked.connect(self.GetCompressedZipInfo)
         # 选择明文路径
         self.SelectPlainFile.clicked.connect(lambda: self.UpdatePlainFilePath(str(QFileDialog.getOpenFileName(self, "请选择明文路径", "")[0])))
-        self.StartAttack.clicked.connect(self.Attak)
+        self.StartAttack.clicked.connect(self.Attack)
         self.ExportZip.clicked.connect(self.DoExportZip)
     
     def UpdatePlainFilePath(self, path):
@@ -32,18 +32,20 @@ class MainWindow(QWidget, Ui_Form):
         self.ViewCompressedZip.setPlainText(path)
 
     def GetCompressedZipInfo(self):
-        command = "bkcrack.exe -L " + self.ViewCompressedZip.toPlainText()
+        # "bkcrack.exe -L " + self.ViewCompressedZip.toPlainText()
+        command = ["bkcrack.exe", "-L", self.ViewCompressedZip.toPlainText()]
         print(command)
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         print(result)
         self.OutPutArea.setPlainText(result.stdout)
 
-    def Attak(self):
+    def Attack(self):
         plainname = self.PlainName.toPlainText()
         if not plainname:
             self.OutPutArea.setPlainText("请先输入明文文件名称")
             return
-        command = "bkcrack.exe -C " + self.ViewCompressedZip.toPlainText() + " -c " + plainname + " -p " + self.ViewPlainFile.toPlainText()
+        # "bkcrack.exe -C " + self.ViewCompressedZip.toPlainText() + " -c " + plainname + " -p " + self.ViewPlainFile.toPlainText()
+        command = ["bkcrack.exe", "-C", self.ViewCompressedZip.toPlainText(), "-c", plainname, "-p", self.ViewPlainFile.toPlainText()]
         print(command)
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         self.OutPutArea.setPlainText(result.stdout)
@@ -57,7 +59,8 @@ class MainWindow(QWidget, Ui_Form):
         if not plainname:
             self.OutPutArea.setPlainText("请先输入明文文件名称")
             return
-        command = "bkcrack.exe -C " + self.ViewCompressedZip.toPlainText() + " -c " + plainname + " -k " + key + " -D " + self.ViewCompressedZip.toPlainText() + "_NO_PASS.zip"
+        # "bkcrack.exe -C " + self.ViewCompressedZip.toPlainText() + " -c " + plainname + " -k " + key + " -D " + self.ViewCompressedZip.toPlainText() + "_NO_PASS.zip"
+        command = ["bkcrack.exe", "-C", self.ViewCompressedZip.toPlainText(), "-c", plainname, "-k", key, "-D", self.ViewCompressedZip.toPlainText() + "_NO_PASS.zip"]
         print(command)
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         print(result)
