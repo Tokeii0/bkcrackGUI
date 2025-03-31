@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QLabel, QSizePolicy, QWidget)
+from PySide6.QtWidgets import (QApplication, QLabel, QSizePolicy, QWidget, QComboBox)
 
-from qfluentwidgets import (PlainTextEdit, PushButton, TextBrowser)
+from qfluentwidgets import (PlainTextEdit, PushButton, TextBrowser, ComboBox)
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -56,7 +56,7 @@ class Ui_Form(object):
         self.CompressedZipInfo.setStyleSheet(u"background-color: rgb(197, 0, 99);")
         self.label_2 = QLabel(Form)
         self.label_2.setObjectName(u"label_2")
-        self.label_2.setGeometry(QRect(10, 140, 151, 16))
+        self.label_2.setGeometry(QRect(10, 140, 401, 16))
         self.label_2.setFont(font)
         self.label_3 = QLabel(Form)
         self.label_3.setObjectName(u"label_3")
@@ -104,7 +104,7 @@ class Ui_Form(object):
         self.ViewCompressedZip.setStyleSheet(u"color: rgb(255, 255, 127);\n"
 "border-color: rgb(255, 170, 255);")
         self.ViewCompressedZip.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.PlainName = PlainTextEdit(Form)
+        self.PlainName = ComboBox(Form)
         self.PlainName.setObjectName(u"PlainName")
         self.PlainName.setGeometry(QRect(10, 160, 401, 25))
         font4 = QFont()
@@ -113,11 +113,7 @@ class Ui_Form(object):
         font4.setBold(False)
         self.PlainName.setFont(font4)
         self.PlainName.setAutoFillBackground(False)
-        self.PlainName.setStyleSheet(u"color: rgb(255, 255, 127);\n"
-"background-color: rgb(35, 35, 35);")
-        self.PlainName.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.PlainName.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.PlainName.setBackgroundVisible(False)
+        self.PlainName.setStyleSheet(u"color: rgb(255, 255, 127);")
         self.ViewPlainFile = TextBrowser(Form)
         self.ViewPlainFile.setObjectName(u"ViewPlainFile")
         self.ViewPlainFile.setGeometry(QRect(10, 250, 401, 25))
@@ -137,11 +133,10 @@ class Ui_Form(object):
         self.SelectCompressedFile.setText(QCoreApplication.translate("Form", u"\u9009\u62e9\u6587\u4ef6", None))
         self.label.setText(QCoreApplication.translate("Form", u"\u52a0\u5bc6\u7684\u538b\u7f29\u5305", None))
         self.CompressedZipInfo.setText(QCoreApplication.translate("Form", u"\u67e5\u770b\u538b\u7f29\u5305\u4fe1\u606f", None))
-        self.label_2.setText(QCoreApplication.translate("Form", u"\u660e\u6587\u6587\u4ef6\u540d\u79f0", None))
+        self.label_2.setText(QCoreApplication.translate("Form", u"\u660e\u6587\u6587\u4ef6\u540d\u79f0 (\u70b9\u51fb\u67e5\u770b\u538b\u7f29\u5305\u4fe1\u606f\u53ef\u81ea\u52a8\u63d0\u53d6)", None))
         self.label_3.setText(QCoreApplication.translate("Form", u"\u660e\u6587\u8def\u5f84 (\u9884\u5236\u660e\u6587\u5728 plains \u6587\u4ef6\u5939\u4e2d)", None))
         self.SelectPlainFile.setText(QCoreApplication.translate("Form", u"\u9009\u62e9\u6587\u4ef6", None))
         self.StartAttack.setText(QCoreApplication.translate("Form", u"\u5f00\u59cb\u653b\u51fb", None))
         self.label_4.setText(QCoreApplication.translate("Form", u"\u5bc6\u94a5", None))
         self.ExportZip.setText(QCoreApplication.translate("Form", u"\u5bfc\u51fa\u65e0\u5bc6\u7801\u538b\u7f29\u5305", None))
     # retranslateUi
-
