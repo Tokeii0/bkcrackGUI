@@ -89,3 +89,35 @@ class OutputPanelComponent(QWidget):
     def get_output_text(self):
         """获取输出区域的文本"""
         return self.output_area.toPlainText()
+        
+    def replace_last_line(self, text):
+        """替换最后一行内容，用于动态更新进度"""
+        # 获取当前文本
+        current_text = self.output_area.toPlainText()
+        
+        # 如果当前没有文本，直接添加
+        if not current_text:
+            self.append_output(text)
+            return
+            
+        # 分割成行
+        lines = current_text.split('\n')
+        
+        # 替换最后一行
+        if lines and lines[-1].strip():  # 确保最后一行不是空行
+            lines[-1] = text
+        else:
+            # 如果最后一行是空行，添加新行
+            lines.append(text)
+            
+        # 重新组合文本
+        new_text = '\n'.join(lines)
+        
+        # 更新文本区域
+        cursor_position = self.output_area.textCursor().position()
+        self.output_area.setPlainText(new_text)
+        
+        # 滚动到底部
+        self.output_area.verticalScrollBar().setValue(
+            self.output_area.verticalScrollBar().maximum()
+        )

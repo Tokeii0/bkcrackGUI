@@ -361,8 +361,14 @@ class BKCrackGUI(QObject):
         # 隐藏取消按钮
         self.ui.output_panel.hide_cancel_button()
         
-        # 显示输出
-        self.ui.output_panel.append_output(output)
+        # 不再重复显示整个输出，因为已经通过updateProgress显示了
+        # self.ui.output_panel.append_output(output)
+        
+        # 重置进度显示状态，为下一次攻击做准备
+        if hasattr(self, 'progress_started'):
+            delattr(self, 'progress_started')
+        if hasattr(self, 'success_message_shown'):
+            delattr(self, 'success_message_shown')
         
         # 提取密钥
         keys = []
@@ -518,8 +524,68 @@ class BKCrackGUI(QObject):
             
     def updateProgress(self, line):
         """更新进度信息"""
-        # 将新行添加到输出区域
-        self.ui.output_panel.append_output(line)
+        # 清理特殊控制字符和进度显示
+        cleaned_line = self.clean_control_chars(line)
+        if cleaned_line.strip():  # 如果清理后的行不为空
+            # 检查是否是进度信息行
+            if self.is_progress_line(cleaned_line):
+                # 如果是第一次显示进度信息，添加一个标题行
+                if not hasattr(self, 'progress_started'):
+                    self.ui.output_panel.append_output("进度: ")
+                    self.progress_started = True
+                    
+                # 替换最后一行的进度信息
+                self.ui.output_panel.replace_last_line(f"进度: {cleaned_line}")
+            elif ("Keys:" in cleaned_line) or ("Keys" in cleaned_line and len(cleaned_line.split()) >= 4):
+                # 如果是密钥行，正常添加
+                self.ui.output_panel.append_output(cleaned_line)
+                # 如果找到密钥，添加成功提示
+                if not hasattr(self, 'success_message_shown'):
+                    self.ui.output_panel.append_output("\n攻击成功！已获取密钥，可以使用\"解密文件\"按钮解密压缩包")
+                    self.success_message_shown = True
+            elif "Found a solution" in cleaned_line or "Stopping" in cleaned_line:
+                # 找到解决方案的信息，正常添加
+                self.ui.output_panel.append_output(cleaned_line)
+            elif "bkcrack" in cleaned_line and "reduction" in cleaned_line:
+                # 这是程序开始的信息，已经显示过了，不重复显示
+                pass
+            elif "You may resume" in cleaned_line and "--continue-attack" in cleaned_line:
+                # 恢复攻击的提示信息，正常添加
+                self.ui.output_panel.append_output(cleaned_line)
+            elif "Attack on" in cleaned_line and "values at index" in cleaned_line:
+                # 攻击开始信息，添加一个空行后再显示
+                self.ui.output_panel.append_output("\n" + cleaned_line)
+            else:
+                # 其他非进度信息，检查是否是重复的程序头信息
+                if not (("bkcrack" in cleaned_line and "-" in cleaned_line) or 
+                       ("Z reduction" in cleaned_line)):
+                    self.ui.output_panel.append_output(cleaned_line)
+                    
+    def is_progress_line(self, text):
+        """判断是否是进度信息行"""
+        # 检查是否包含百分比和分数形式
+        if "%" in text and "(" in text and ")" in text and "/" in text:
+            return True
+        # 检查是否是攻击开始行
+        if "Attack on" in text and "values at index" in text:
+            return True
+        return False
+            
+    def clean_control_chars(self, text):
+        """清理控制字符和进度显示"""
+        # 替换常见的控制字符
+        replacements = {
+            '\r': '',  # 回车符
+            '[1K': '',  # 清除行的控制字符
+            '[2K': '',  # 清除行的控制字符
+            '\x1b': ''  # ESC字符
+        }
+        
+        result = text
+        for old, new in replacements.items():
+            result = result.replace(old, new)
+        
+        return result
         
     def clearOutput(self):
         """清空输出区域"""
