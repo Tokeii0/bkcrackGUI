@@ -1,10 +1,16 @@
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtWidgets import QApplication, QWidget, QFileDialog, QComboBox
+from PySide6.QtWidgets import QApplication, QWidget, QFileDialog
 from ui.Ui_main import Ui_Form
+from qfluentwidgets import ComboBox
 import subprocess
 import sys
 import threading
+import os
+import logging
+
+# 设置日志记录来捕获错误
+logging.basicConfig(level=logging.ERROR)
 
 # 创建一个工作线程类用于执行耗时操作
 class WorkerThread(QThread):
@@ -61,12 +67,22 @@ class WorkerThread(QThread):
 class MainWindow(QWidget, Ui_Form):
     def __init__(self):
         super().__init__()
+        # 启用调试输出
+        self.debug = True
         self.setupUi(self)
         self.compressedZipPath = ''  # 用于存储被加密的压缩包路径
         self.plainFilePath = ''  # 用于存储明文路径
-        self.bind()
         # 初始化线程变量
         self.worker_thread = None
+        # 初始化明文文件下拉框
+        self.initPlainFileComboBox()
+        # 绑定事件处理函数
+        self.bind()
+        
+    def log(self, message):
+        """调试日志函数"""
+        if self.debug:
+            print(f"[DEBUG] {message}")
 
     def bind(self):
         # 选择被加密的压缩包
@@ -74,13 +90,80 @@ class MainWindow(QWidget, Ui_Form):
         # 查看被加密的压缩包信息
         self.CompressedZipInfo.clicked.connect(self.GetCompressedZipInfo)
         # 选择明文路径
-        self.SelectPlainFile.clicked.connect(lambda: self.UpdatePlainFilePath(str(QFileDialog.getOpenFileName(self, "请选择明文路径", "")[0])))
+        self.SelectPlainFile.clicked.connect(self.selectCustomPlainFile)
+        # 明文文件下拉框变化时更新明文路径
+        self.PlainFileCombo.currentIndexChanged.connect(self.onPlainFileComboChanged)
         self.StartAttack.clicked.connect(self.Attack)
         self.ExportZip.clicked.connect(self.DoExportZip)
     
+    def initPlainFileComboBox(self):
+        # 创建明文文件下拉框
+        self.PlainFileCombo = ComboBox(self)
+        self.PlainFileCombo.setObjectName(u"PlainFileCombo")
+        self.PlainFileCombo.setGeometry(self.ViewPlainFile.geometry())
+        self.PlainFileCombo.setFont(self.ViewPlainFile.font())
+        self.PlainFileCombo.setAutoFillBackground(False)
+        self.PlainFileCombo.setStyleSheet(u"color: rgb(255, 255, 127);")
+        
+        # 隐藏原来的文本浏览框
+        self.ViewPlainFile.hide()
+        
+        # 添加"选择其他文件..."选项
+        self.PlainFileCombo.addItem("选择其他文件...")
+        
+        # 从plains文件夹加载文件
+        self.loadPlainFiles()
+    
+    def loadPlainFiles(self):
+        # 获取plains文件夹路径
+        plains_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plains")
+        
+        # 检查文件夹是否存在
+        if os.path.exists(plains_dir) and os.path.isdir(plains_dir):
+            # 获取文件夹中的所有文件
+            files = [f for f in os.listdir(plains_dir) if os.path.isfile(os.path.join(plains_dir, f))]
+            
+            # 将文件添加到下拉框，并记录文件路径
+            self.plain_file_paths = {}  # 用字典存储文件名到路径的映射
+            for file in files:
+                file_path = os.path.join(plains_dir, file)
+                self.PlainFileCombo.addItem(file)
+                self.plain_file_paths[file] = file_path
+                self.log(f"loadPlainFiles - 添加文件 {file} 路径 {file_path}")
+    
+    def onPlainFileComboChanged(self, index):
+        if index == 0:  # "选择其他文件..."
+            return
+        
+        # 获取选中文件的名称和路径
+        file_name = self.PlainFileCombo.currentText()
+        file_path = self.plain_file_paths.get(file_name)
+        self.log(f"onPlainFileComboChanged - 选择的文件: {file_name}, 路径: {file_path}")
+        if file_path:
+            self.plainFilePath = file_path
+            self.ViewPlainFile.setPlainText(file_path)
+            self.ViewPlainFile.show()
+    
+    def selectCustomPlainFile(self):
+        # 打开文件选择对话框
+        file_path = str(QFileDialog.getOpenFileName(self, "请选择明文路径", "")[0])
+        self.log(f"selectCustomPlainFile - 选择的文件路径: {file_path}")
+        if file_path:
+            # 更新明文路径
+            self.plainFilePath = file_path
+            self.ViewPlainFile.setPlainText(file_path)
+            self.ViewPlainFile.show()
+            # 将下拉框设置为"选择其他文件..."
+            self.PlainFileCombo.setCurrentIndex(0)
+    
     def UpdatePlainFilePath(self, path):
+        if not path:
+            return
+        self.log(f"UpdatePlainFilePath - 更新路径: {path}")
         self.plainFilePath = path
+        # 在下拉框下方显示选择的文件路径
         self.ViewPlainFile.setPlainText(path)
+        self.ViewPlainFile.show()  # 显示路径
     
     def UpdateCompressedFilePath(self, path):
         self.compressedZipPath = path
@@ -138,20 +221,69 @@ class MainWindow(QWidget, Ui_Form):
                 self.PlainName.addItems(filenames)
                 # 选择第一个文件
                 self.PlainName.setCurrentIndex(0)
+                # 自动匹配明文文件
+                self.autoMatchPlainFile(filenames[0])
+
+    def autoMatchPlainFile(self, filename):
+        """根据压缩包中的文件名自动匹配明文文件"""
+        if not filename:
+            return
+            
+        # 获取文件扩展名
+        file_ext = os.path.splitext(filename)[1].lower()
+        if not file_ext:
+            return
+            
+        # 去掉点号
+        file_ext = file_ext[1:]
+        
+        self.log(f"autoMatchPlainFile - 文件扩展名: {file_ext}")
+        
+        # 在plains文件夹中查找匹配的明文文件
+        for i in range(1, self.PlainFileCombo.count()):
+            item_text = self.PlainFileCombo.itemText(i)
+            self.log(f"autoMatchPlainFile - 检查项 {i}: {item_text}")
+            if file_ext in item_text.lower():
+                # 找到匹配的明文文件，选中它
+                self.log(f"autoMatchPlainFile - 匹配到文件: {item_text}")
+                self.PlainFileCombo.setCurrentIndex(i)
+                # 获取文件路径并更新
+                file_path = self.plain_file_paths.get(item_text)
+                self.log(f"autoMatchPlainFile - 获取的文件路径: {file_path}")
+                if file_path:
+                    self.plainFilePath = file_path  # 直接设置明文路径
+                    self.ViewPlainFile.setPlainText(file_path)
+                    self.ViewPlainFile.show()
+                    self.OutPutArea.setPlainText(self.OutPutArea.toPlainText() + f"\n已自动匹配明文文件：{item_text}")
+                return
+                    
+        # 如果没有找到匹配的文件，提示用户
+        self.OutPutArea.setPlainText(self.OutPutArea.toPlainText() + f"\n未找到匹配的明文文件，请手动选择与 {file_ext} 类型对应的明文文件。")
 
     def Attack(self):
         plainname = self.PlainName.currentText()
         if not plainname:
             self.OutPutArea.setPlainText("请先选择明文文件名称")
             return
+        
+        self.log(f"Attack - plainFilePath: {self.plainFilePath}")
+        
+        if not self.plainFilePath:
+            self.OutPutArea.setPlainText("请先选择明文文件路径")
+            return
+            
+        # 检查文件是否存在
+        if not os.path.exists(self.plainFilePath):
+            self.OutPutArea.setPlainText(f"明文文件不存在: {self.plainFilePath}")
+            return
             
         # 禁用开始攻击按钮，防止重复点击
         self.StartAttack.setEnabled(False)
         self.OutPutArea.setPlainText("正在进行攻击，请稍候...\n这可能需要一些时间，请耐心等待。\n\n")
         
-        # "bkcrack.exe -C " + self.ViewCompressedZip.toPlainText() + " -c " + plainname + " -p " + self.ViewPlainFile.toPlainText()
-        command = ["bkcrack.exe", "-C", self.ViewCompressedZip.toPlainText(), "-c", plainname, "-p", self.ViewPlainFile.toPlainText()]
-        print(command)
+        # "bkcrack.exe -C " + self.ViewCompressedZip.toPlainText() + " -c " + plainname + " -p " + self.plainFilePath
+        command = ["bkcrack.exe", "-C", self.ViewCompressedZip.toPlainText(), "-c", plainname, "-p", self.plainFilePath]
+        print(f"执行命令: {command}")
         
         # 创建并启动工作线程
         self.worker_thread = WorkerThread(command)
@@ -217,7 +349,18 @@ class MainWindow(QWidget, Ui_Form):
         self.OutPutArea.setPlainText(output + '\n' + "导出成功！无密码压缩包路径：" + self.ViewCompressedZip.toPlainText() + "_NO_PASS.zip")
 
 if __name__ == "__main__":
+    # 忽略libpng错误和其他图像相关警告
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning)
+    
+    # 设置环境变量以禁用Qt的调试输出
+    os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.qpa.*=false"
+    
     app = QApplication(sys.argv)
+    
+    # 禁用QT的libpng错误输出
+    QtCore.qInstallMessageHandler(lambda *args: None)
+    
     window = MainWindow()
     window.show()
     app.exec()
