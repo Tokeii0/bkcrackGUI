@@ -1,2 +1,38 @@
 ui/__pycache__/Ui_main.cpython-313.pyc
 example/Triglavian.zip_NO_PASS.zip
+*/__pycache__/*
+*/__pycache__
+__pycache__/*
+ui\components\__pycache__\*
+
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# IDE配置文件
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+
+# 输出文件
+output/
+*.zip_NO_PASS*.zip
